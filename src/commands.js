@@ -1,4 +1,4 @@
-// تحليل الاختيارات
+// استخراج الاختيارات
 function parseOption(line) {
   const match = line.match(
     /^\s*(?:\(([A-Za-zأ-ي0-9٠-٩]+)\)|([A-Za-zأ-ي0-9٠-٩]+)[.)\-:])\s*(.+?)\s*$/
@@ -7,11 +7,10 @@ function parseOption(line) {
   if (!match) return null;
 
   const raw = match[3];
-  const correct = /✅|✔️|✓/.test(raw);
 
   return {
     text: raw.replace(/✅|✔️|✓/g, "").trim(),
-    correct
+    correct: /✅|✔️|✓/.test(raw)
   };
 }
 
@@ -57,25 +56,23 @@ function parseQuestions(text) {
 
     const option = parseOption(line);
 
-    // بداية سؤال جديد مرقم بعد اكتمال الاختيارات
+    // بداية سؤال جديد بصيغة Q1 أو Question 1 أو سؤال 1
     if (
       options.length >= 2 &&
-      /^(?:Q(?:uestion)?\s*)?[0-9٠-٩]+\s*[.)\-:]\s*/i.test(line) &&
-      !option
+      /^(?:Q(?:uestion)?|سؤال)\s*[0-9٠-٩]+\s*[.)\-:]/i.test(line)
     ) {
       save();
-      title.push(line.replace(/^(?:Q(?:uestion)?\s*)?[0-9٠-٩]+\s*[.)\-:]\s*/i, ""));
+      title.push(line.replace(/^(?:Q(?:uestion)?|سؤال)\s*[0-9٠-٩]+\s*[.)\-:]\s*/i, ""));
       continue;
     }
 
     if (option && title.length) {
       options.push(option);
-      readingExplanation = false;
       continue;
     }
 
     if (options.length === 0) {
-      title.push(line.replace(/^(?:Q(?:uestion)?\s*)?[0-9٠-٩]+\s*[.)\-:]\s*/i, ""));
+      title.push(line);
       continue;
     }
 
@@ -117,7 +114,7 @@ export function registerCommands(bot) {
       "C. Ribosome\n" +
       "D. Golgi apparatus\n\n" +
       "Explanation: Mitochondria produce ATP.\n\n" +
-      "يمكنك إرسال عدة أسئلة مرقمة في رسالة واحدة.\n" +
+      "يمكنك إرسال عدة أسئلة مرقمة بصيغة Q1 وQ2.\n" +
       "كل سؤال يتحول إلى استفتاء مستقل.\n\n" +
       "ضع ✅ بجانب إجابة واحدة صحيحة."
     )
@@ -139,12 +136,14 @@ export function registerCommands(bot) {
     if (!questions.length) {
       return ctx.reply(
         "لم أتمكن من استخراج الأسئلة.\n\n" +
-        "تأكد من وجود سؤال واختيارين على الأقل، " +
+        "تأكد من وجود اختيارين على الأقل، " +
         "وضع ✅ بجانب إجابة واحدة صحيحة."
       );
     }
 
-    await ctx.reply(`تم استخراج ${questions.length} سؤالاً. جاري إنشاء الاستفتاءات...`);
+    await ctx.reply(
+      `تم استخراج ${questions.length} سؤالاً. جاري إنشاء الاستفتاءات...`
+    );
 
     let success = 0;
     let failed = 0;
