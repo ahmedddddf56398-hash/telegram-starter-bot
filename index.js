@@ -10,7 +10,7 @@
 
 import http from "node:http"
 import { Bot, webhookCallback } from "grammy"
-import { registerCommands } from "./src/commands.js"
+import { registerCommands } from "./src/quiz.js"
 
 const token = process.env.TELEGRAM_BOT_TOKEN
 if (!token) {
